@@ -1,0 +1,5 @@
+.vagrant
+dev_playbook/roles/**/*
+!dev_playbook/roles/.keep
+dev_playbook/logs/**/*
+!dev_playbook/logs/.keep

@@ -1,0 +1,77 @@
+---
+- hosts: dev
+  become: yes
+
+  # before running, make sure you install the prereq roles with: 
+  # ansible-galaxy install --roles-path=roles --role-file=ansible_prereq_roles.yml --force
+  #
+  # then run with something like: 
+  # ANSIBLE_CONFIG='.ansible.cfg' ansible-playbook playbook.yml -i inventory.ini
+
+  vars:
+    # used by zzet.rbenv role
+    rbenv:
+      env: system
+      version: v1.1.2
+      default_ruby: 2.6.6
+      rubies:
+      - version: 2.6.6
+
+  pre_tasks:
+    - name: Yummy 
+      yum: 
+        enablerepo:
+          - epel-release
+          - powertools
+        update_cache: yes 
+        state: latest 
+        name: "{{ item }}"
+      with_items:
+        - bash-completion
+        - htop 
+        - yum-utils 
+        - "@Development Tools"
+        - python39
+        - libyaml-devel
+
+#  TODO : use the alternatives module to symlink /usr/bin/python3 to /usr/bin/python39
+
+  roles:
+    # - role: geerlingguy.nginx
+    #   when: appconfig.app.env != 'wsl'
+
+    # system-wide rbenv for managing ruby versions
+    - role: zzet.rbenv
+      rbenv_group: vagrant
+
+    # vagrant user only nvm for managing node
+    - role: stephdewit.nvm
+      nvm_version: latest
+      nvm_node_version: 12.6.0
+      nvm_install_path: "/home/vagrant/.nvm"
+      nvm_shell_init_file: "/home/vagrant/.bashrc"
+      environment:
+        NVM_DIR: "/home/vagrant/.nvm"
+
+
+  tasks:
+    # leave owned by root, but change to automation group ownership,
+    # also change directories to 0776 and files to 0664
+    - name: Update rbenv directory to ensure appropriate permissions
+      file:
+        path: /usr/local/rbenv
+        group: vagrant
+        mode: u=rwX,g=rwX,o=rX
+        recurse: yes
+
+    - name: Update nvm directory to ensure appropriate permissions
+      file:
+        path: "/home/vagrant/.nvm"
+        state: directory
+        recurse: yes
+        owner: "vagrant"
+        group: "vagrant"
+
+  post_tasks:
+    # - name: Service checks
+    #   include_tasks: tasks/os_services.yml
