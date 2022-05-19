@@ -32,6 +32,7 @@ Vagrant.configure("2") do |config|
     dev.vm.network "private_network", ip: "192.168.69.69" # niiiiiice
 
     dev.vm.synced_folder "./keys", "/home/vagrant/keys"
+    dev.vm.synced_folder File.join(ENV['HOMEPATH'], 'code'), "/home/vagrant/code"
 
     dev.vm.network "forwarded_port", guest: 3000, host: 3000, host_ip: "127.0.0.1"
     dev.vm.network "forwarded_port", guest: 3035, host: 3035, host_ip: "127.0.0.1"
