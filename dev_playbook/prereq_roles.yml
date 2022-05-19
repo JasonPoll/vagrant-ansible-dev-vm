@@ -1,5 +1,6 @@
 - src: zzet.rbenv
 - src: stephdewit.nvm
+- src: geerlingguy.memcached
 - src: geerlingguy.nginx
 - src: geerlingguy.repo-epel
 - src: geerlingguy.redis

@@ -8,23 +8,6 @@
   # then run with something like: 
   # ANSIBLE_CONFIG='.ansible.cfg' ansible-playbook playbook.yml -i inventory.ini
 
-  vars:
-    # used by zzet.rbenv role
-    rbenv:
-      env: system
-      version: v1.1.2
-      default_ruby: 2.6.9
-      rubies:
-      - version: 2.6.9
-    postgresql_users: 
-      - name: vagrant
-        pass: vagrant
-        encrypted: yes
-        state: present
-    postgresql_user_privileges:
-      - name: vagrant
-        role_attr_flags: SUPERUSER
-
   pre_tasks:
     - name: Yummy Dev Tools
       yum: 
@@ -42,6 +25,10 @@
         - python39
         - libyaml-devel
         - python39-psycopg2
+        - freetds
+        - sassc
+        - libyaml
+        - libffi
 
     - name: Symlink python3 to python3.9
       alternatives: 
@@ -57,17 +44,48 @@
         - setuptools
 
   roles:
+    - role: geerlingguy.memcached
+    
     - role: geerlingguy.redis
 
     # would like to use ANXS.postgresql role, but their latest version in ansible-galaxy is outdated.
     # roles/sd.postgresql is our own extract of their repository...seems to work.
     - role: sd.postgresql
+      postgresql_users: 
+        - name: vagrant
+          pass: vagrant
+          encrypted: yes
+          state: present
+      postgresql_user_privileges:
+        - name: vagrant
+          role_attr_flags: SUPERUSER
+
 
     # system-wide rbenv for managing ruby versions
     - role: zzet.rbenv
+      rbenv:
+        env: system
+        version: v1.2.0
+        default_ruby: 3.1.2
+        rubies:
+          - version: 2.6.10
+          - version: 2.7.6
+          - version: 3.0.4
+          - version: 3.1.2
+      rbenv_clean_up: true
+      rbenv_plugins: 
+        - { name: "rbenv-vars",         repo: "https://github.com/rbenv/rbenv-vars.git",         version: "master" }
+        - { name: "ruby-build",         repo: "https://github.com/rbenv/ruby-build.git",         version: "master" }
+        - { name: "rbenv-default-gems", repo: "https://github.com/rbenv/rbenv-default-gems.git", version: "master" }
+        - { name: "rbenv-installer",    repo: "https://github.com/rbenv/rbenv-installer.git",    version: "main" }
+        - { name: "rbenv-update",       repo: "https://github.com/rkh/rbenv-update.git",         version: "master" }
+        - { name: "rbenv-whatis",       repo: "https://github.com/rkh/rbenv-whatis.git",         version: "master" }
+        - { name: "rbenv-use",          repo: "https://github.com/rkh/rbenv-use.git",            version: "master" }
+        - { name: 'rbenv-bundle-exec',  repo: "https://github.com/maljub01/rbenv-bundle-exec",   version: "master" }
+      rbenv_owner: root
       rbenv_group: vagrant
 
-    # vagrant-user-only nvm for managing node
+    # vagrant-user-only nvm for managing node(i can't make it work system-wide...not gonna fight it.)
     - role: stephdewit.nvm
       nvm_version: latest
       nvm_node_version: 17.6.0
@@ -78,14 +96,13 @@
 
   tasks:
 
-    # leave owned by root, but change to automation group ownership,
-    # also change directories to 0776 and files to 0664
-    - name: Update rbenv directory to ensure appropriate permissions
-      file:
-        path: /usr/local/rbenv
+    - name: Update rbenv-bundle-exec plugin ~/.no_bundle_exec
+      copy: 
+        src: files/no_bundle_exec
+        dest: /home/vagrant/.no_bundle_exec
+        owner: vagrant
         group: vagrant
-        mode: u=rwX,g=rwX,o=rX
-        recurse: yes
+        mode: 0644 
 
     - name: Update nvm directory to ensure appropriate permissions
       file:
@@ -94,5 +111,13 @@
         recurse: yes
         owner: "vagrant"
         group: "vagrant"
+
+    - name: Update nvm default-packages
+      copy: 
+        src: files/default-packages
+        dest: /home/vagrant/.nvm/default-packages
+        owner: vagrant
+        group: vagrant
+        mode: 0644 
 
   
