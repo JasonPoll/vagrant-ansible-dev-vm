@@ -13,12 +13,20 @@
     rbenv:
       env: system
       version: v1.1.2
-      default_ruby: 2.6.6
+      default_ruby: 2.6.9
       rubies:
-      - version: 2.6.6
+      - version: 2.6.9
+    postgresql_users: 
+      - name: vagrant
+        pass: vagrant
+        encrypted: yes
+        state: present
+    postgresql_user_privileges:
+      - name: vagrant
+        role_attr_flags: SUPERUSER
 
   pre_tasks:
-    - name: Yummy 
+    - name: Yummy Dev Tools
       yum: 
         enablerepo:
           - epel-release
@@ -33,28 +41,43 @@
         - "@Development Tools"
         - python39
         - libyaml-devel
+        - python39-psycopg2
 
-#  TODO : use the alternatives module to symlink /usr/bin/python3 to /usr/bin/python39
+    - name: Symlink python3 to python3.9
+      alternatives: 
+        name: python3
+        path: /usr/bin/python3.9
+
+    - name: Update pip and setuptools
+      pip: 
+        name: "{{ item }}"
+        state: latest # ie: "pip3 install --upgrade"
+      with_items: 
+        - pip
+        - setuptools
 
   roles:
-    # - role: geerlingguy.nginx
-    #   when: appconfig.app.env != 'wsl'
+    - role: geerlingguy.redis
+
+    # would like to use ANXS.postgresql role, but their latest version in ansible-galaxy is outdated.
+    # roles/sd.postgresql is our own extract of their repository...seems to work.
+    - role: sd.postgresql
 
     # system-wide rbenv for managing ruby versions
     - role: zzet.rbenv
       rbenv_group: vagrant
 
-    # vagrant user only nvm for managing node
+    # vagrant-user-only nvm for managing node
     - role: stephdewit.nvm
       nvm_version: latest
-      nvm_node_version: 12.6.0
+      nvm_node_version: 17.6.0
       nvm_install_path: "/home/vagrant/.nvm"
       nvm_shell_init_file: "/home/vagrant/.bashrc"
       environment:
         NVM_DIR: "/home/vagrant/.nvm"
 
-
   tasks:
+
     # leave owned by root, but change to automation group ownership,
     # also change directories to 0776 and files to 0664
     - name: Update rbenv directory to ensure appropriate permissions
@@ -72,6 +95,4 @@
         owner: "vagrant"
         group: "vagrant"
 
-  post_tasks:
-    # - name: Service checks
-    #   include_tasks: tasks/os_services.yml
+  

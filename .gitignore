@@ -1,5 +1,7 @@
+# thank you https://theapache64.github.io/git-do-not-ignore/
 .vagrant
-dev_playbook/roles/**/*
-!dev_playbook/roles/.keep
+!dev_playbook/roles/
+dev_playbook/roles/*
+!dev_playbook/roles/sd.postgresql
 dev_playbook/logs/**/*
 !dev_playbook/logs/.keep
