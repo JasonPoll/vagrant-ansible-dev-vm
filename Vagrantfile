@@ -60,7 +60,7 @@ Vagrant.configure("2") do |config|
     ans.vm.synced_folder "./dev_playbook", "/home/vagrant/dev_playbook"
     ans.vm.synced_folder "./keys", "/home/vagrant/keys"
 
-    ans.vm.provision "shell", inline: <<-SHELL
+    ans.vm.provision "shell", name: 'install ansible', inline: <<-SHELL
       sudo --user=vagrant --login mkdir -p /home/vagrant/.ssh && chmod 700 /home/vagrant/.ssh
       sudo --user=vagrant --login cp /home/vagrant/keys/id_rsa* /home/vagrant/.ssh && chmod 600 /home/vagrant/.ssh/id_rsa
       echo "alias ls='ls -alh --color=auto'" >> .bashrc
@@ -70,20 +70,30 @@ Vagrant.configure("2") do |config|
       yum install -y bash-completion htop yum-utils
       yum install -y python39
       alternatives --set python3 /usr/bin/python3.9
-      pip3 install --upgrade pip setuptools
+      pip3 install --upgrade pip setuptools virtualenv
       sudo --user=vagrant --login python3 -m pip install --user ansible
+    SHELL
 
-      echo "----------------------------------------"
-      echo "SSH into this host with:"
-      echo "  vagrant ssh ans1"
-      echo ""
-      echo "Provision the development VM with:"
-      echo "  cd /home/vagrant/dev_playbook && ANSIBLE_CONFIG="./ansible.cfg" /home/vagrant/.local/bin/ansible-playbook playbook.yml -i inventory.ini"
-      echo ""
-      echo "----------------------------------------"
+    ans.vm.provision "shell", name: 'provision dev1 using ansible inside ans1', after: 'install ansible', communicator_required: true, privileged: false, inline: <<-SHELL
+      # echo "----------------------------------------"
+      # echo "SSH into this host with:"
+      # echo "  vagrant ssh ans1"
+      # echo ""
+      # echo "Provision the development VM with:"
+      # echo "  cd /home/vagrant/dev_playbook && ANSIBLE_CONFIG="./ansible.cfg" /home/vagrant/.local/bin/ansible-playbook playbook.yml -i inventory.ini"
+      # echo ""
+      # echo "----------------------------------------"
+      
+      cd /home/vagrant/dev_playbook
+      rm -fr roles/zzet.rbenv/
+      rm -fr roles/stephdewit.nvm/
+      rm -fr roles/geerlingguy.nginx/ 
+      rm -fr roles/geerlingguy.repo-epel/
+      rm -fr roles/geerlingguy.redis/
+
+      ansible-galaxy install --role-file=prereq_roles.yml --roles-path=/home/vagrant/dev_playbook/roles --force 
+      ANSIBLE_CONFIG="/home/vagrant/dev_playbook/ansible.cfg" /home/vagrant/.local/bin/ansible-playbook /home/vagrant/dev_playbook/playbook.yml -i /home/vagrant/dev_playbook/inventory.ini
     SHELL
   end
-
-
   # beg/borrow/steal ideas from https://github.com/ValveSoftware/Proton/blob/proton_6.3/Vagrantfile
 end
