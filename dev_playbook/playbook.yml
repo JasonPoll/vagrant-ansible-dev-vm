@@ -30,8 +30,6 @@
         - libyaml
         - libffi
 
-    # TODO : use geerlingguy.memcached to get memcached installed
-
     - name: Symlink python3 to python3.9
       alternatives: 
         name: python3
@@ -45,20 +43,9 @@
         - pip
         - setuptools
 
-    - name: Stub nvm directory
-      file:
-        path: "/home/vagrant/.nvm"
-        state: directory
-
-    - name: Update nvm default-packages
-      copy: 
-        src: files/default-packages
-        dest: /home/vagrant/.nvm/default-packages
-        owner: vagrant
-        group: vagrant
-        mode: 0644 
-
   roles:
+    - role: geerlingguy.memcached
+    
     - role: geerlingguy.redis
 
     # would like to use ANXS.postgresql role, but their latest version in ansible-galaxy is outdated.
@@ -124,5 +111,13 @@
         recurse: yes
         owner: "vagrant"
         group: "vagrant"
+
+    - name: Update nvm default-packages
+      copy: 
+        src: files/default-packages
+        dest: /home/vagrant/.nvm/default-packages
+        owner: vagrant
+        group: vagrant
+        mode: 0644 
 
   

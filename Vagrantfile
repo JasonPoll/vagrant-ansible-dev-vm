@@ -88,6 +88,7 @@ Vagrant.configure("2") do |config|
       cd /home/vagrant/dev_playbook
       rm -fr roles/zzet.rbenv/
       rm -fr roles/stephdewit.nvm/
+      rm -fr roles/geerlingguy.memcached/
       rm -fr roles/geerlingguy.nginx/ 
       rm -fr roles/geerlingguy.repo-epel/
       rm -fr roles/geerlingguy.redis/
