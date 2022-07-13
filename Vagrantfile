@@ -32,10 +32,12 @@ Vagrant.configure("2") do |config|
     dev.vm.network "private_network", ip: "192.168.69.69" # niiiiiice
 
     dev.vm.synced_folder "./keys", "/home/vagrant/keys"
-    dev.vm.synced_folder File.join(ENV['HOMEPATH'], 'code'), "/home/vagrant/code"
+    # Virtualbox's support of shared folders in/out of the VM is pretty shoddy. 
+    # NOT YET dev.vm.synced_folder File.join(ENV['HOMEPATH'], 'code'), "/home/vagrant/code"
 
-    dev.vm.network "forwarded_port", guest: 3000, host: 3000, host_ip: "127.0.0.1"
-    dev.vm.network "forwarded_port", guest: 3035, host: 3035, host_ip: "127.0.0.1"
+    # NOT YET dev.vm.network "forwarded_port", guest: 3000, host: 3000, host_ip: "127.0.0.1"
+    # NOT YET dev.vm.network "forwarded_port", guest: 3035, host: 3035, host_ip: "127.0.0.1"
+    # NOT YET dev.vm.network "forwarded_port", guest: 5432, host: 54321, host_ip: "127.0.0.1"
 
     dev.vm.provision "shell", inline: <<-SHELL
       sudo --user=vagrant --login mkdir -p /home/vagrant/.ssh
@@ -68,7 +70,7 @@ Vagrant.configure("2") do |config|
 
       yum install -y epel-release
       yum update -y
-      yum install -y bash-completion htop yum-utils
+      yum install -y bash-completion htop yum-utils git
       yum install -y python39
       alternatives --set python3 /usr/bin/python3.9
       pip3 install --upgrade pip setuptools virtualenv
@@ -92,6 +94,7 @@ Vagrant.configure("2") do |config|
       rm -fr roles/geerlingguy.nginx/ 
       rm -fr roles/geerlingguy.repo-epel/
       rm -fr roles/geerlingguy.redis/
+      rm -fr roles/avanov.pyenv/
 
       ansible-galaxy install --role-file=prereq_roles.yml --roles-path=/home/vagrant/dev_playbook/roles --force 
       ANSIBLE_CONFIG="/home/vagrant/dev_playbook/ansible.cfg" /home/vagrant/.local/bin/ansible-playbook /home/vagrant/dev_playbook/playbook.yml -i /home/vagrant/dev_playbook/inventory.ini

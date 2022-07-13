@@ -44,6 +44,19 @@
         - setuptools
 
   roles:
+    # NOT YET- role: avanov.pyenv
+    # NOT YET  pyenv_env: system
+    # NOT YET  pyenv_path: /usr/local/pyenv
+    # NOT YET  pyenv_owner: vagrant
+    # NOT YET  pyenv_python_versions: 
+    # NOT YET    - 3.8.13
+    # NOT YET    - 3.9.13
+    # NOT YET    - 3.10.4
+    # NOT YET  pyenv_global: 3.10.4
+    # NOT YET  pyenv_virtualenvs:
+    # NOT YET    - venv_name: latest
+    # NOT YET      py_version: 3.10.4
+
     - role: geerlingguy.memcached
     
     - role: geerlingguy.redis
@@ -95,6 +108,17 @@
         NVM_DIR: "/home/vagrant/.nvm"
 
   tasks:
+
+    - name: Symlink pg_config into /usr/bin
+      alternatives: 
+        name: pg_config
+        link: /usr/bin/pg_config
+        path: /usr/pgsql-13/bin/pg_config
+
+    - name: Instal PG dev tools
+      yum: 
+        state: latest 
+        name: postgresql13-devel
 
     - name: Update rbenv-bundle-exec plugin ~/.no_bundle_exec
       copy: 
