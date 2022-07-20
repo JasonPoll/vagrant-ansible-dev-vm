@@ -29,6 +29,8 @@
         - sassc
         - libyaml
         - libffi
+        - graphviz 
+        - graphviz-devel
 
     - name: Symlink python3 to python3.9
       alternatives: 
@@ -44,18 +46,18 @@
         - setuptools
 
   roles:
-    - role: avanov.pyenv
-      pyenv_env: system
-      pyenv_path: /usr/local/pyenv
-      pyenv_owner: vagrant
-      pyenv_python_versions: 
-        - 3.8.13
-        - 3.9.13
-        - 3.10.4
-      pyenv_global: 3.10.4
-      pyenv_virtualenvs:
-        - venv_name: latest
-          py_version: 3.10.4
+    # NOT YET- role: avanov.pyenv
+    # NOT YET  pyenv_env: system
+    # NOT YET  pyenv_path: /usr/local/pyenv
+    # NOT YET  pyenv_owner: vagrant
+    # NOT YET  pyenv_python_versions: 
+    # NOT YET    - 3.8.13
+    # NOT YET    - 3.9.13
+    # NOT YET    - 3.10.4
+    # NOT YET  pyenv_global: 3.10.4
+    # NOT YET  pyenv_virtualenvs:
+    # NOT YET    - venv_name: latest
+    # NOT YET      py_version: 3.10.4
 
     - role: geerlingguy.memcached
     
@@ -127,6 +129,18 @@
         owner: vagrant
         group: vagrant
         mode: 0644 
+
+    # Monkey with permissions of /usr/local/rbenv
+    # zzet.rbenv does an ok job on the permissions, but it doesn't grant the rbenv_group write
+    # permissions to _everything_ that it should.
+    # leave /usr/local/rbenv owned by root, but change to vagrant group ownership,
+    # also change directories to 0776 and files to 0664.
+    - name: Update /usr/local/rbenv to ensure appropriate permissions
+      file:
+        path: /usr/local/rbenv
+        group: vagrant
+        mode: u=rwX,g=rwX,o=rX
+        recurse: yes
 
     - name: Update nvm directory to ensure appropriate permissions
       file:
