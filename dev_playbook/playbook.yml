@@ -1,161 +1,84 @@
 ---
 - hosts: dev
-  become: yes
+  become: true
+  become_method: sudo
 
-  # before running, make sure you install the prereq roles with: 
-  # ansible-galaxy install --roles-path=roles --role-file=ansible_prereq_roles.yml --force
+  # before running, make sure you install the prereq roles with:
+  # ansible-galaxy install --roles-path=roles --role-file=prereq_roles.yml --force
   #
-  # then run with something like: 
-  # ANSIBLE_CONFIG='.ansible.cfg' ansible-playbook playbook.yml -i inventory.ini
+  # then run with something like:
+  # ANSIBLE_CONFIG='./ansible.cfg' ANSIBLE_INVENTORY='./inventory.ini' ansible-playbook playbook.yml
 
   pre_tasks:
-    - name: Yummy Dev Tools
-      yum: 
-        enablerepo:
-          - epel-release
-          - powertools
-        update_cache: yes 
-        state: latest 
-        name: "{{ item }}"
-      with_items:
-        - bash-completion
-        - htop 
-        - yum-utils 
-        - "@Development Tools"
-        - python39
-        - libyaml-devel
-        - python39-psycopg2
-        - freetds
-        - sassc
-        - libyaml
-        - libffi
-        - graphviz 
-        - graphviz-devel
-
-    - name: Symlink python3 to python3.9
-      alternatives: 
-        name: python3
-        path: /usr/bin/python3.9
-
-    - name: Update pip and setuptools
-      pip: 
-        name: "{{ item }}"
-        state: latest # ie: "pip3 install --upgrade"
-      with_items: 
-        - pip
-        - setuptools
+    - include_tasks: tasks/system-dependencies-rhel.yml
+      when: (ansible_pkg_mgr == "yum" or ansible_pkg_mgr == "dnf") and (ansible_distribution == "Rocky" or ansible_distribution == "RedHat" or ansible_distribution == "CentOS" or ansible_distribution == "OracleLinux")
+    - include_tasks: "tasks/system-dependencies-ubuntu.yml"
+      when: ansible_pkg_mgr == "apt" and ansible_distribution == "Ubuntu"
 
   roles:
-    # NOT YET- role: avanov.pyenv
-    # NOT YET  pyenv_env: system
-    # NOT YET  pyenv_path: /usr/local/pyenv
-    # NOT YET  pyenv_owner: vagrant
-    # NOT YET  pyenv_python_versions: 
-    # NOT YET    - 3.8.13
-    # NOT YET    - 3.9.13
-    # NOT YET    - 3.10.4
-    # NOT YET  pyenv_global: 3.10.4
-    # NOT YET  pyenv_virtualenvs:
-    # NOT YET    - venv_name: latest
-    # NOT YET      py_version: 3.10.4
-
-    - role: geerlingguy.memcached
-    
-    - role: geerlingguy.redis
-
-    # would like to use ANXS.postgresql role, but their latest version in ansible-galaxy is outdated.
-    # roles/sd.postgresql is our own extract of their repository...seems to work.
-    - role: sd.postgresql
-      postgresql_users: 
-        - name: vagrant
-          pass: vagrant
-          encrypted: yes
-          state: present
-      postgresql_user_privileges:
-        - name: vagrant
-          role_attr_flags: SUPERUSER
-
-
-    # system-wide rbenv for managing ruby versions
+    - role: staticdev.pyenv
+      vars:
+        pyenv_env: user
+        pyenv_path: "/home/vagrant/.pyenv"
+        pyenv_owner: vagrant
+        pyenv_owner_group: vagrant
+        pyenv_python_versions:
+          - "3.10.12"
+        pyenv_global:
+          - "3.10.12"
+        pyenv_shellrc_file: "/home/vagrant/.bashrc"
     - role: zzet.rbenv
-      rbenv:
-        env: system
-        version: v1.2.0
-        default_ruby: 3.1.2
-        rubies:
-          - version: 2.6.10
-          - version: 2.7.6
-          - version: 3.0.4
-          - version: 3.1.2
-      rbenv_clean_up: true
-      rbenv_plugins: 
-        - { name: "rbenv-vars",         repo: "https://github.com/rbenv/rbenv-vars.git",         version: "master" }
-        - { name: "ruby-build",         repo: "https://github.com/rbenv/ruby-build.git",         version: "master" }
-        - { name: "rbenv-default-gems", repo: "https://github.com/rbenv/rbenv-default-gems.git", version: "master" }
-        - { name: "rbenv-installer",    repo: "https://github.com/rbenv/rbenv-installer.git",    version: "main" }
-        - { name: "rbenv-update",       repo: "https://github.com/rkh/rbenv-update.git",         version: "master" }
-        - { name: "rbenv-whatis",       repo: "https://github.com/rkh/rbenv-whatis.git",         version: "master" }
-        - { name: "rbenv-use",          repo: "https://github.com/rkh/rbenv-use.git",            version: "master" }
-        - { name: 'rbenv-bundle-exec',  repo: "https://github.com/maljub01/rbenv-bundle-exec",   version: "master" }
-      rbenv_owner: root
-      rbenv_group: vagrant
+      vars:
+        rbenv:
+          env: user
+          version: v1.2.0
+          default_ruby: 3.2.2
+          rubies:
+            - version: 2.7.8
+            - version: 3.0.6
+            - version: 3.1.4
+            - version: 3.2.2
+            - version: 3.3.0
+        rbenv_users:
+          - vagrant
+        rbenv_plugins:
+          - { name: "ruby-build",         repo: "https://github.com/rbenv/ruby-build.git",         version: "master" }
+          - { name: "rbenv-installer",    repo: "https://github.com/rbenv/rbenv-installer.git",    version: "main" }
+          - { name: "rbenv-update",       repo: "https://github.com/rkh/rbenv-update.git",         version: "master" }
+        rbenv_clean_up: false
+
+    # - role: geerlingguy.memcached
+    # - role: geerlingguy.redis
+    # # would like to use ANXS.postgresql role, but their latest version in ansible-galaxy is outdated.
+    # # roles/sd.postgresql is our own extract of their repository...seems to work.
+    # - role: sd.postgresql
+    #   postgresql_users:
+    #     - name: vagrant
+    #       pass: vagrant
+    #       encrypted: yes
+    #       state: present
+    #   postgresql_user_privileges:
+    #     - name: vagrant
+    #       role_attr_flags: SUPERUSER
 
     # vagrant-user-only nvm for managing node(i can't make it work system-wide...not gonna fight it.)
     - role: stephdewit.nvm
-      nvm_version: latest
-      nvm_node_version: 17.6.0
-      nvm_install_path: "/home/vagrant/.nvm"
-      nvm_shell_init_file: "/home/vagrant/.bashrc"
-      environment:
-        NVM_DIR: "/home/vagrant/.nvm"
+      vars:
+        nvm:
+          node_version: "18.6.0"
+          install_for: vagrant
+          install_info: "/home/vagrant/.nvm"
+        nvm_version: latest
+        nvm_node_version: "18.6.0"
+        nvm_install_path: "/home/vagrant/.nvm"
+        nvm_shell_init_file: "/home/vagrant/.bashrc"
+        environment:
+          NVM_DIR: "/home/vagrant/.nvm"
 
   tasks:
+    - include_tasks: 'tasks/nvm.yml'
 
-    - name: Symlink pg_config into /usr/bin
-      alternatives: 
-        name: pg_config
-        link: /usr/bin/pg_config
-        path: /usr/pgsql-13/bin/pg_config
+    - include_tasks: 'tasks/git-bash-prompt.yml'
 
-    - name: Instal PG dev tools
-      yum: 
-        state: latest 
-        name: postgresql13-devel
 
-    - name: Update rbenv-bundle-exec plugin ~/.no_bundle_exec
-      copy: 
-        src: files/no_bundle_exec
-        dest: /home/vagrant/.no_bundle_exec
-        owner: vagrant
-        group: vagrant
-        mode: 0644 
 
-    # Monkey with permissions of /usr/local/rbenv
-    # zzet.rbenv does an ok job on the permissions, but it doesn't grant the rbenv_group write
-    # permissions to _everything_ that it should.
-    # leave /usr/local/rbenv owned by root, but change to vagrant group ownership,
-    # also change directories to 0776 and files to 0664.
-    - name: Update /usr/local/rbenv to ensure appropriate permissions
-      file:
-        path: /usr/local/rbenv
-        group: vagrant
-        mode: u=rwX,g=rwX,o=rX
-        recurse: yes
-
-    - name: Update nvm directory to ensure appropriate permissions
-      file:
-        path: "/home/vagrant/.nvm"
-        state: directory
-        recurse: yes
-        owner: "vagrant"
-        group: "vagrant"
-
-    - name: Update nvm default-packages
-      copy: 
-        src: files/default-packages
-        dest: /home/vagrant/.nvm/default-packages
-        owner: vagrant
-        group: vagrant
-        mode: 0644 
-
-  

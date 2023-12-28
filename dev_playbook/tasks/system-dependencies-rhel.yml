@@ -1,0 +1,55 @@
+# This playbook ensures system tools and libraries are installed that I
+# commonly make use of.
+# Install dependencies for RHEL based systems
+- name: RHEL System Dependencies
+  yum:
+    enablerepo:
+      - appstream
+      - crb
+      - epel
+      - extras
+    update_cache: true
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - "@Development Tools"
+    - cifs-utils                      # Mounting Window CIFS volumes
+    - compat-openssl11                # OpenSSL 1.1 compatibility libs
+    - freetds                         # MSSQL stuff
+    - freetds-devel                   # MSSQL stuff
+    - freetds-libs                    # MSSQL stuff
+    - gdbm-libs
+    - gdbm-devel
+    - git                             #
+    - ImageMagick                     # CLI image manip stuff
+    - ImageMagick-devel               # CLI image manip stuff
+    - ImageMagick-libs                # CLI image manip stuff
+    - libffi                          # Foreign-Function Interface
+    - libmemcached-awesome            # Memcached stuff
+    - libmemcached-awesome-tools      # Memcached stuff
+    - libpq                           # PostgreSQL libs
+    - libpq-devel                     # PostgreSQL libs
+    - libsass                         # SASS libs
+    - libsass-devel                   # SASS libs
+    - libyaml                         # YAML libs
+    - libyaml-devel                   # YAML libs
+    - openssl                         # OpenSSL 3 stuff
+    - openssl-devel                   # OpenSSL 3 stuff
+    - openssl-libs                    # OpenSSL 3 stuff
+    - perl-FindBin                    # Dunno why...need this sometimes
+    - postgresql                      # PostgreSQL CLI tools
+    - readline                        # Readline stuff
+    - readline-devel                  # Readline stuff
+    - redis                           # Redis - want CLI tools only, but this also installs server (disabled below)
+    - redis-devel                     # Redis - want CLI tools only, but this also installs server (disabled below)
+    - sassc                           # SASSC stuff
+    - shared-mime-info                # Mime stuff
+
+
+# We install redis because I want the redis-cli tools. However, I don't want
+# the redis service running.  Make sure that's off and disabled.
+- name: "RHEL: Ensure Redis is disabled"
+  service:
+    name: redis
+    state: stopped
+    enabled: false

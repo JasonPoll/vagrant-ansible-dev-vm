@@ -1,0 +1,49 @@
+# This playbook ensures system tools and libraries are installed that I
+# commonly make use of.
+
+
+
+# Install dependencies for Ubuntu based systems
+- name: Download apt key
+  get_url:
+    url:  https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    dest: /tmp
+
+- name: Add apt key from file
+  apt_key:
+    file: /tmp/apt-key.gpg
+    state: present
+
+
+- name: Ubuntu System Dependencies
+  apt:
+    update_cache: true
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - "build-essential"
+    - cifs-utils                      # Mounting Window CIFS volumes
+    # - compat-openssl11                # OpenSSL 1.1 compatibility libs
+    - freetds-bin                     # MSSQL stuff
+    - freetds-common                  # MSSQL stuff
+    - freetds-dev                     # MSSQL stuff
+    - git                             #
+    - imagemagick                     # CLI image manip stuff
+    - libffi8                          # Foreign-Function Interface
+    - libffi-dev                      # Foreign-Function Interface
+    - libmemcached-dev                # Memcached stuff
+    - libmemcached-tools              # Memcached stuff
+    - libpq5                           # PostgreSQL libs
+    - libpq-dev                       # PostgreSQL libs
+    - libsass1                         # SASS libs
+    - libsass-dev                     # SASS libs
+    - libyaml-0-2                         # YAML libs
+    - libyaml-dev                     # YAML libs
+    - openssl                         # OpenSSL 3 stuff
+    - postgresql-client               # PostgreSQL CLI tools
+    - postgresql-client-common        # PostgreSQL CLI tools
+    - readline-common                 # Readline stuff
+    - redis-tools                     # Redis - want CLI tools only
+    - sassc                           # SASSC stuff
+    - shared-mime-info                # Mime stuff
+
