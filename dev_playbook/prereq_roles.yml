@@ -1,9 +1,7 @@
-- src: https://github.com/avanov/ansible-galaxy-pyenv
-  version: master
-  name: avanov.pyenv
-- src: geerlingguy.memcached
-- src: geerlingguy.nginx
-- src: geerlingguy.redis
-- src: geerlingguy.repo-epel
+- src: staticdev.pyenv
+# - src: geerlingguy.memcached
+# - src: geerlingguy.nginx
+# - src: geerlingguy.redis
+# - src: geerlingguy.repo-epel
 - src: stephdewit.nvm
 - src: zzet.rbenv
